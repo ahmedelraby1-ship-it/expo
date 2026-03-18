@@ -199,8 +199,16 @@ function createRequestHandler({ getRoutesManifest, getHtml, getApiRoute, getMidd
             });
         }
         if ((0, matchers_1.isResponse)(html)) {
-            // Only used for development errors
-            return html;
+            // Only used for development error responses
+            return createResponseFrom('notFoundHtml', route, html);
+        }
+        if (html != null) {
+            return createResponse('notFoundHtml', route, html, {
+                status: 404,
+                headers: new Headers({
+                    'Content-Type': 'text/html',
+                }),
+            });
         }
         throw new ExpoError(`HTML route file ${route.page}.html could not be loaded`);
     }
@@ -239,7 +247,15 @@ function createRequestHandler({ getRoutesManifest, getHtml, getApiRoute, getMidd
         }
         if ((0, matchers_1.isResponse)(html)) {
             // Only used for development error responses
-            return html;
+            return createResponseFrom('html', route, html);
+        }
+        if (html != null) {
+            return createResponse('html', route, html, {
+                status: 200,
+                headers: new Headers({
+                    'Content-Type': 'text/html',
+                }),
+            });
         }
         throw new ExpoError(`HTML route file ${route.page}.html could not be loaded`);
     }
