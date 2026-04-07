@@ -1,3 +1,5 @@
+import ExpoModulesJSI
+
 /**
  A protocol that allows initializing the object with a dictionary.
  For supported field types, see https://docs.expo.dev/modules/module-api/#argument-types
@@ -56,6 +58,25 @@ public extension Record {
       if dictKeys.contains(key) || field.isRequired {
         try field.set(dict[key], appContext: appContext)
       }
+    }
+  }
+
+  @JavaScriptActor
+  func update(withObject object: consuming JavaScriptObject, appContext: AppContext) throws {
+    try fieldsOf(self).forEach { field in
+      guard let key = field.key else {
+        return
+      }
+      let jsValue = object.getProperty(key)
+
+      if jsValue.isUndefined() || jsValue.isNull() {
+        if field.isRequired {
+          try field.set(nil, appContext: appContext)
+        }
+        return
+      }
+      let value = try field.fieldType.cast(jsValue: jsValue, appContext: appContext)
+      try field.set(value, appContext: appContext)
     }
   }
 

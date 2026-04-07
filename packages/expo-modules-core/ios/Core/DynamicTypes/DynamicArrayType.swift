@@ -1,5 +1,7 @@
 // Copyright 2021-present 650 Industries. All rights reserved.
 
+import ExpoModulesJSI
+
 /**
  A dynamic type representing array types. Requires the array's element type
  for the initialization as it delegates casting to that type for each element in the array.
@@ -22,7 +24,7 @@ internal struct DynamicArrayType: AnyDynamicType {
   }
 
   func cast(jsValue: JavaScriptValue, appContext: AppContext) throws -> Any {
-    let value = jsValue.isArray() ? jsValue.getArray() : [jsValue]
+    let value = jsValue.isArray() ? jsValue.getArray().map { $0 } : [jsValue]
     return try value.map { try elementType.cast(jsValue: $0, appContext: appContext) }
   }
 

@@ -1,5 +1,7 @@
 // Copyright 2024-present 650 Industries. All rights reserved.
 
+import ExpoModulesJSI
+
 internal struct DynamicVoidType: AnyDynamicType {
   static let shared = DynamicVoidType()
 
@@ -20,7 +22,11 @@ internal struct DynamicVoidType: AnyDynamicType {
   }
 
   func castToJS<ValueType>(_ value: ValueType, appContext: AppContext) throws -> JavaScriptValue {
-    return .undefined
+    // For compatibility with non-concurrent async functions we need to pass it down anyway
+//    if let value = value as? JavaScriptRepresentable {
+//      return value.toJavaScriptValue(in: try appContext.runtime)
+//    }
+    return .undefined()
   }
 
   var description: String {

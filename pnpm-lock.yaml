@@ -4591,6 +4591,9 @@ importers:
       '@expo/expo-modules-macros-plugin':
         specifier: ~0.0.7
         version: 0.0.7
+      expo-modules-jsi:
+        specifier: 55.0.0
+        version: link:../expo-modules-jsi
       invariant:
         specifier: ^2.2.4
         version: 2.2.4

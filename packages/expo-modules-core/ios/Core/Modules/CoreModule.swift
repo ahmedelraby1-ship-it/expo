@@ -2,6 +2,7 @@
 
 internal import React
 import Foundation
+import ExpoModulesJSI
 
 private let WORKLET_RUNTIME_KEY = "_WORKLET_RUNTIME"
 
@@ -60,8 +61,10 @@ internal final class CoreModule: Module {
 
       let block = {
         do {
-          let uiRuntime = try factory(appContext, pointerHolder, runtime)
-          appContext._uiRuntime = uiRuntime
+          try JavaScriptActor.assumeIsolated {
+            let uiRuntime = try factory(appContext, pointerHolder, runtime)
+            appContext._uiRuntime = uiRuntime
+          }
         } catch {
           errorHolder.error = error
         }

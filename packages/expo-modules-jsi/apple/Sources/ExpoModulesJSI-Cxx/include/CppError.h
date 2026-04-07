@@ -118,6 +118,14 @@ public:
     return _current.release();
   }
 
+  /**
+   Sets the current thread's error from a message string.
+   Called from Swift when a host function closure throws an error.
+   */
+  inline static void setCurrent(const std::string &message) {
+    _current = std::make_unique<CppError>(message);
+  }
+
 private:
   /**
    Pointer to the last thrown and caught error. Each thread maintains its own error pointer,

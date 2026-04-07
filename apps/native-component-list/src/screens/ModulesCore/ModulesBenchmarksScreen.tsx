@@ -1,12 +1,13 @@
+import { Code } from '@expo/html-elements';
 import { useTheme } from 'ThemeProvider';
 import { TurboModule, ExpoModule, BridgeModule } from 'benchmarking';
 import { useCallback, useState } from 'react';
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type BenchmarkResult = {
-  expoTime: number;
-  turboTime: number;
-  bridgeTime: number;
+  expoTime: number | null;
+  turboTime: number | null;
+  bridgeTime: number | null;
 };
 
 type AsyncBenchmarkResult = {
@@ -156,7 +157,7 @@ function runNumberOptimizedBenchmark(): BenchmarkResult {
 function runStringsBenchmark(): BenchmarkResult {
   let expoTime = 0;
   {
-    const result = ExpoModule.addStrings('hello', 'world');
+    const result = ExpoModule.addStrings('hello ', 'world');
     if (result !== 'hello world') {
       throw new Error('ExpoModule.addStrings() returned an incorrect result!');
     }
@@ -283,7 +284,7 @@ function BenchmarkResultContainer(props: { functionName: string; result: Benchma
   return (
     <View style={styles.benchmarkContainer}>
       <Text style={[styles.testHeader, { color: theme.text.default }]}>
-        Calling `{functionName}` {runs.toLocaleString()} times
+        <Code>{functionName}</Code> {runs.toLocaleString()} times
       </Text>
       <View style={styles.testResult}>
         <Text style={[styles.testResultText, { color: theme.text.default }]}>
@@ -371,7 +372,8 @@ export default function ModulesBenchmarksScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 30,
+    paddingVertical: 20,
+    paddingHorizontal: 30,
     alignItems: 'center',
   },
   benchmarkContainer: {

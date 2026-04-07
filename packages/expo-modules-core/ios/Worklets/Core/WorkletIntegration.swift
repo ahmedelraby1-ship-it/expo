@@ -1,6 +1,7 @@
 // Copyright 2025-present 650 Industries. All rights reserved.
 
 import ExpoModulesCore
+import ExpoModulesJSI
 
 /// Registers the worklet runtime factory with ExpoModulesCore.
 /// This is called automatically via +load in WorkletIntegrationLoader.mm.
@@ -8,10 +9,10 @@ import ExpoModulesCore
 public final class WorkletIntegration: NSObject {
   @objc public static func register() {
     AppContext.uiRuntimeFactory = { _, pointerValue, runtime in
-      guard let pointer = WorkletRuntimeFactory.extractRuntimePointer(pointerValue, runtime: runtime) else {
+//      guard let pointer = WorkletRuntimeFactory.extractRuntimePointer(pointerValue, runtime: runtime) else {
         throw WorkletRuntimePointerExtractionException()
-      }
-      return WorkletRuntimeFactory.createWorkletRuntime(fromPointer: pointer)
+//      }
+//      return WorkletRuntimeFactory.createWorkletRuntime(fromPointer: pointer)
     }
   }
 }

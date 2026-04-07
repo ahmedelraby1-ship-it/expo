@@ -1,7 +1,9 @@
 // Copyright 2021-present 650 Industries. All rights reserved.
 
+import ExpoModulesJSI
+
 public struct Promise: AnyArgument, Sendable {
-  public typealias ResolveClosure = @Sendable (Any?) -> Void
+  public typealias ResolveClosure = @Sendable (_ value: JavaScriptValue) -> Void
   public typealias RejectClosure = @Sendable (Exception) -> Void
 
   internal weak var appContext: AppContext?
@@ -29,7 +31,12 @@ public struct Promise: AnyArgument, Sendable {
   }
 
   public func resolve(_ value: Any? = nil) {
-    resolver(value)
+    // Using the dynamic type for Any is the slowest path, but we need this for backwards compatibility.
+    tryResolve(NonisolatedUnsafeVar(value).value, dynamicType: ~Any.self)
+  }
+
+  public func resolve<T: AnyArgument>(_ value: sending T) {
+    tryResolve(value, dynamicType: T.getDynamicType())
   }
 
   public func reject(_ error: Error) {
@@ -54,6 +61,22 @@ public struct Promise: AnyArgument, Sendable {
       resolve(value)
     case .failure(let exception):
       reject(exception)
+    }
+  }
+
+  // MARK: - Private
+
+  private func tryResolve<T>(_ value: sending T, dynamicType: AnyDynamicType) {
+    guard let appContext, let runtime = try? appContext.runtime else {
+      return
+    }
+    runtime.schedule(priority: .immediate) {
+      do {
+        let value = try appContext.converter.toJS(value, dynamicType)
+        resolver(value)
+      } catch {
+        reject(error)
+      }
     }
   }
 }

@@ -1,5 +1,7 @@
 // Copyright 2021-present 650 Industries. All rights reserved.
 
+import ExpoModulesJSI
+
 /**
  A dynamic type that represents an optional type, which allows `nil` to be passed when casting.
  Requires the optional's wrapped type as it delegates casting to that type for non-nil values.
@@ -33,6 +35,13 @@ internal struct DynamicOptionalType: AnyDynamicType {
       return Optional<Any>.none as Any
     }
     return try wrappedType.cast(value, appContext: appContext)
+  }
+
+  func castToJS<ValueType>(_ value: ValueType, appContext: AppContext) throws -> JavaScriptValue {
+    if Optional.isNil(value) || value is NSNull {
+      return .null()
+    }
+    return try wrappedType.castToJS(value, appContext: appContext)
   }
 
   func convertResult<ResultType>(_ result: ResultType, appContext: AppContext) throws -> Any {

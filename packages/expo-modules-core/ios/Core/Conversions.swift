@@ -1,3 +1,5 @@
+import ExpoModulesJSI
+
 public struct Conversions {
   /**
    Converts an array to tuple. Because of tuples nature, it's not possible to convert an array of any size, so we can support only up to some fixed size.
@@ -216,6 +218,51 @@ public struct Conversions {
     return value as Any
   }
 
+  // MARK: - Any to JavaScript
+
+  /**
+   Converts an arbitrary native value to a `JavaScriptValue`.
+   Handles Swift primitives, strings, arrays, and dictionaries with `Any` values
+   that can't be statically matched to `JavaScriptRepresentable`.
+   */
+  static func anyToJavaScriptValue(_ value: Any, runtime: JavaScriptRuntime) throws -> JavaScriptValue {
+    if let value = value as? JavaScriptRepresentable {
+      return .representing(value: value, in: runtime)
+    }
+    switch value {
+    case is Void:
+      return .undefined()
+    case is NSNull:
+      return .null()
+    case let number as NSNumber:
+      // NSNumber wrapping a boolean is also a valid NSNumber, so check for bool first.
+      if number === kCFBooleanTrue {
+        return .true()
+      }
+      if number === kCFBooleanFalse {
+        return .false()
+      }
+      return .number(number.doubleValue)
+    case let string as NSString:
+      return .representing(value: string as String, in: runtime)
+    case let array as NSArray:
+      let jsArray = runtime.createArray(length: array.count)
+      for (index, element) in array.enumerated() {
+        try jsArray.set(value: anyToJavaScriptValue(element, runtime: runtime), at: index)
+      }
+      return jsArray.asValue()
+    case let dict as NSDictionary:
+      let jsObject = runtime.createObject()
+      for (key, element) in dict {
+        guard let key = key as? String else { continue }
+        jsObject.setProperty(key, value: try anyToJavaScriptValue(element, runtime: runtime))
+      }
+      return jsObject.asValue()
+    default:
+      return .undefined()
+    }
+  }
+
   // MARK: - Exceptions
 
   /**
@@ -230,7 +277,7 @@ public struct Conversions {
   /**
    An exception thrown when the native value cannot be converted to JavaScript value.
    */
-  internal final class ConversionToJSFailedException: GenericException<(kind: JavaScriptValueKind, nativeType: Any.Type)> {
+  internal final class ConversionToJSFailedException: GenericException<(kind: JavaScriptValue.Kind, nativeType: Any.Type)> {
     override var code: String {
       "ERR_CONVERTING_TO_JS_FAILED"
     }
@@ -242,7 +289,7 @@ public struct Conversions {
   /**
    An exception thrown when the JavaScript value cannot be converted to native value.
    */
-  internal final class ConversionToNativeFailedException: GenericException<(kind: JavaScriptValueKind, nativeType: Any.Type)> {
+  internal final class ConversionToNativeFailedException: GenericException<(kind: JavaScriptValue.Kind, nativeType: Any.Type)> {
     override var code: String {
       "ERR_CONVERTING_TO_NATIVE_FAILED"
     }
@@ -272,6 +319,24 @@ public struct Conversions {
     }
     override var reason: String {
       "Cannot cast '\(String(describing: param))' to \(TargetType.self)"
+    }
+  }
+
+  internal class CastingJSValueException<TargetType>: GenericException<JavaScriptValue.Kind>, @unchecked Sendable {
+    override var code: String {
+      "ERR_CASTING_JS_VALUE_FAILED"
+    }
+    override var reason: String {
+      "Cannot cast from JavaScript value of kind '\(param)' to \(TargetType.self)"
+    }
+  }
+
+  internal class UnexpectedValueType: GenericException<(received: JavaScriptValue.Kind, expected: JavaScriptValue.Kind)>, @unchecked Sendable {
+    override var code: String {
+      "ERR_UNEXPECTED_VALUE_TYPE"
+    }
+    override var reason: String {
+      "Received JavaScript value of type '\(param.received)', but expected '\(param.expected)'"
     }
   }
 

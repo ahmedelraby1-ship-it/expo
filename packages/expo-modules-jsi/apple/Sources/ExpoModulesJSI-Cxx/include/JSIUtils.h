@@ -66,7 +66,16 @@ inline std::shared_ptr<const jsi::Buffer> makeSharedStringBuffer(const std::stri
 inline jsi::Function createHostFunction(jsi::Runtime &runtime, const jsi::PropNameID &propName, HostFunctionClosure *closure) {
   auto closurePtr = std::shared_ptr<HostFunctionClosure>(closure);
   return jsi::Function::createFromHostFunction(runtime, propName, 0, [closurePtr](jsi::Runtime &runtime, const jsi::Value &thisValue, const jsi::Value *_Nonnull args, size_t count) -> jsi::Value {
-    return closurePtr->call(thisValue, args, count);
+    auto result = closurePtr->call(thisValue, args, count);
+
+    // If the Swift closure stored a pending error, throw it as a JSError.
+    auto *error = CppError::getCurrent();
+    if (error) {
+      std::string message = error->message;
+      delete error;
+      throw jsi::JSError(runtime, message);
+    }
+    return result;
   });
 }
 

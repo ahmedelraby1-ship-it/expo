@@ -51,14 +51,14 @@ Pod::Spec.new do |s|
   s.dependency 'ReactCommon'
   s.dependency 'React-runtimescheduler'
 
-  unless File.exist?("#{s.name}.xcframework")
+  unless File.exist?("Products/#{s.name}.xcframework")
     raise "`#{s.name}.xcframework` not found"
   end
 
   s.source_files = [
     "Sources/ExpoModulesJSI-RuntimeProvider/**/*.{h,mm}"
   ]
-  s.vendored_frameworks = ["#{s.name}.xcframework"]
+  s.vendored_frameworks = ["Products/#{s.name}.xcframework"]
 
   s.test_spec 'Tests' do |test_spec|
     test_spec.source_files = 'Tests/**/*.swift'
