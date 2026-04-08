@@ -211,6 +211,14 @@ export const UIScreens = [
     },
   },
   {
+    name: 'LazyVStack / LazyHStack',
+    route: 'ui/lazy-stack',
+    options: {},
+    getComponent() {
+      return optionalRequire(() => require('./LazyStackScreen'));
+    },
+  },
+  {
     name: 'ScrollView component',
     route: 'ui/scrollview',
     options: {},
