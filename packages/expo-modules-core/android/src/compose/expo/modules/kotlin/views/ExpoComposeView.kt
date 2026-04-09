@@ -27,8 +27,13 @@ data class ComposableScope(
   val rowScope: RowScope? = null,
   val columnScope: ColumnScope? = null,
   val boxScope: BoxScope? = null,
-  val nestedScrollConnection: NestedScrollConnection? = null
+  val nestedScrollConnection: NestedScrollConnection? = null,
+  val extras: Map<Any, Any> = emptyMap()
 )
+
+fun ComposableScope.withExtra(key: Any, value: Any): ComposableScope {
+  return this.copy(extras = extras + (key to value))
+}
 
 inline fun ComposableScope.withIf(
   condition: Boolean,

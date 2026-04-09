@@ -57,7 +57,7 @@ import expo.modules.kotlin.views.ComposableScope
 import expo.modules.ui.convertibles.AlignmentType
 import expo.modules.ui.convertibles.CompositingStrategyType
 import expo.modules.ui.convertibles.GraphicsLayerParams
-import expo.modules.ui.menu.LocalExposedDropdownMenuBoxScope
+import expo.modules.ui.menu.exposedDropdownMenuBoxScope
 
 typealias ModifierType = Map<String, Any?>
 typealias ModifierList = List<ModifierType>
@@ -575,20 +575,17 @@ object ModifierRegistry {
     }
 
     // ExposedDropdownMenuBox scope-dependent modifier
-    register("menuAnchor") { map, _, _, _ ->
-      val scope = LocalExposedDropdownMenuBoxScope.current
-      if (scope != null) {
-        val params = recordFromMap<MenuAnchorParams>(map)
-        with(scope) {
-          Modifier.menuAnchor(
-            type = when (params.type) {
-              MenuAnchorType.PRIMARY_NOT_EDITABLE -> ExposedDropdownMenuAnchorType.PrimaryNotEditable
-            },
-            enabled = params.enabled ?: true
-          )
-        }
-      } else {
-        Modifier
+    register("menuAnchor") { map, scope, _, _ ->
+      val dropdownScope = scope?.exposedDropdownMenuBoxScope
+        ?: error("menuAnchor modifier can only be used inside ExposedDropdownMenuBox")
+      val params = recordFromMap<MenuAnchorParams>(map)
+      with(dropdownScope) {
+        Modifier.menuAnchor(
+          type = when (params.type) {
+            MenuAnchorType.PRIMARY_NOT_EDITABLE -> ExposedDropdownMenuAnchorType.PrimaryNotEditable
+          },
+          enabled = params.enabled ?: true
+        )
       }
     }
   }

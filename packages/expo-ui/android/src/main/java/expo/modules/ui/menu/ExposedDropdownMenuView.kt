@@ -22,7 +22,8 @@ fun FunctionalComposableScope.ExposedDropdownMenuContent(
   props: ExposedDropdownMenuProps,
   onDismissRequest: () -> Unit
 ) {
-  val scope = LocalExposedDropdownMenuBoxScope.current ?: return
+  val scope = composableScope.exposedDropdownMenuBoxScope
+    ?: error("ExposedDropdownMenu can only be used inside ExposedDropdownMenuBox")
 
   with(scope) {
     ExposedDropdownMenu(
