@@ -1,13 +1,22 @@
-import { View, Text } from 'react-native';
+import { optionalRequire } from '../../navigation/routeBuilder';
+import ComponentListScreen, { componentScreensToListElements } from '../ComponentListScreen';
 
-export const UIScreens = [];
+// Community drop-in replacement components that support web
+const CommunityScreens = [
+  {
+    name: 'Community BottomSheet replacement',
+    route: 'ui/community-bottomsheet',
+    options: {},
+    getComponent() {
+      return optionalRequire(() => require('./CommunityBottomSheetScreen'));
+    },
+  },
+];
+
+export const UIScreens = [...CommunityScreens];
 
 export default function UIScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Expo UI is only available on Android and iOS currently.</Text>
-    </View>
-  );
+  return <ComponentListScreen apis={componentScreensToListElements(CommunityScreens)} />;
 }
 
 UIScreen.navigationOptions = {

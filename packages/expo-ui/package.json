@@ -26,6 +26,10 @@
     "./datetimepicker": {
       "types": "./build/datetime-picker/index.d.ts",
       "default": "./src/datetime-picker/index.tsx"
+    },
+    "./community/bottom-sheet": {
+      "types": "./build/community/bottom-sheet/index.d.ts",
+      "default": "./src/community/bottom-sheet/index.tsx"
     }
   },
   "scripts": {
@@ -52,7 +56,8 @@
   "author": "650 Industries, Inc.",
   "license": "MIT",
   "dependencies": {
-    "sf-symbols-typescript": "^2.1.0"
+    "sf-symbols-typescript": "^2.1.0",
+    "vaul": "^1.1.2"
   },
   "devDependencies": {
     "@testing-library/react-native": "^13.3.0",
@@ -67,6 +72,7 @@
   "peerDependencies": {
     "expo": "workspace:*",
     "react": "*",
+    "react-dom": "*",
     "react-native": "*",
     "react-native-reanimated": "*",
     "react-native-worklets": "*"
