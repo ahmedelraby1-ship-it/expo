@@ -65,6 +65,32 @@ class ModalBottomSheetView(context: Context, appContext: AppContext) :
     }
   }
 
+  suspend fun expand() {
+    val scope = composeScope ?: return
+    val state = sheetState ?: return
+    try {
+      withContext(scope.coroutineContext) {
+        state.expand()
+      }
+    } catch (_: CancellationException) {
+      // Swipe-dismiss may cancel the coroutine scope while expand() is in-flight.
+      // Swallowing the exception avoids an unhandled promise rejection on the JS side.
+    }
+  }
+
+  suspend fun partialExpand() {
+    val scope = composeScope ?: return
+    val state = sheetState ?: return
+    try {
+      withContext(scope.coroutineContext) {
+        state.partialExpand()
+      }
+    } catch (_: CancellationException) {
+      // Swipe-dismiss may cancel the coroutine scope while partialExpand() is in-flight.
+      // Swallowing the exception avoids an unhandled promise rejection on the JS side.
+    }
+  }
+
   @Composable
   override fun ComposableScope.Content() {
     val sheetState = rememberModalBottomSheetState(props.skipPartiallyExpanded.value)
