@@ -179,15 +179,10 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
 
     if launchedUpdate.status == UpdateStatus.StatusEmbedded {
       precondition(assetFilesMap == nil, "assetFilesMap should be null for embedded updates")
-      let mainBundleUrl = Bundle.main.url(
+      launchAssetUrl = updatesBundle.url(
         forResource: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFilename,
         withExtension: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFileType
       )
-      let frameworkBundleUrl = Bundle(for: AppLauncherWithDatabase.self).url(
-        forResource: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFilename,
-        withExtension: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFileType
-      )
-      launchAssetUrl = mainBundleUrl ?? frameworkBundleUrl
 
       completionQueue.async {
         self.completion!(self.launchAssetError, self.launchAssetUrl != nil)
