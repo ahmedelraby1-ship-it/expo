@@ -22,17 +22,13 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
     initialProperties: [AnyHashable: Any]?,
     launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> UIView? {
-    NSLog("[ExpoUpdates] createReactRootView called, moduleName=%@", moduleName)
     if UpdatesUtils.isUsingCustomInitialization() {
-      NSLog("[ExpoUpdates] using custom initialization, returning nil")
       return nil
     }
 
     AppController.initializeWithoutStarting()
     let controller = AppController.sharedInstance
-    NSLog("[ExpoUpdates] controller type: %@, isActiveController: %d", String(describing: type(of: controller)), controller.isActiveController ? 1 : 0)
     if !controller.isActiveController {
-      NSLog("[ExpoUpdates] controller is not active, returning nil")
       return nil
     }
 
@@ -40,7 +36,6 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
     self.launchOptions = launchOptions
     controller.delegate = self
     controller.start()
-    NSLog("[ExpoUpdates] controller.start() called")
 
     self.rootViewModuleName = moduleName
     self.rootViewInitialProperties = initialProperties
@@ -68,17 +63,12 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
   }
 
   public override func bundleURL(reactDelegate: ExpoReactDelegate) -> URL? {
-    let url = AppController.sharedInstance.launchAssetUrl()
-    NSLog("[ExpoUpdates] bundleURL called, returning: %@", url?.absoluteString ?? "nil")
-    return url
+    AppController.sharedInstance.launchAssetUrl()
   }
 
   // MARK: AppControllerDelegate implementations
 
   public func appController(_ appController: AppControllerInterface, didStartWithSuccess success: Bool) {
-    NSLog("[ExpoUpdates] appController didStartWithSuccess: %d", success ? 1 : 0)
-    let assetUrl = AppController.sharedInstance.launchAssetUrl()
-    NSLog("[ExpoUpdates] launchAssetUrl at didStart: %@", assetUrl?.absoluteString ?? "nil")
     if UpdatesUtils.isUsingCustomInitialization() {
       return
     }
@@ -87,7 +77,7 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
     }
 
     let rootView = reactDelegate.reactNativeFactory.recreateRootView(
-      withBundleURL: assetUrl,
+      withBundleURL: AppController.sharedInstance.launchAssetUrl(),
       moduleName: self.rootViewModuleName,
       initialProps: self.rootViewInitialProperties,
       launchOptions: self.launchOptions

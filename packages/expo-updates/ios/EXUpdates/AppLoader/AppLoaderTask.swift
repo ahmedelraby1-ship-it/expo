@@ -155,7 +155,6 @@ public final class AppLoaderTask: NSObject {
 
     var shouldCheckForUpdate = UpdatesUtils.shouldCheckForUpdate(withConfig: config)
     let launchWaitMs = config.launchWaitMs
-    NSLog("[ExpoUpdates] AppLoaderTask.start - shouldCheckForUpdate: %d, launchWaitMs: %d", shouldCheckForUpdate ? 1 : 0, launchWaitMs)
     if launchWaitMs == 0 || !shouldCheckForUpdate {
       isTimerFinished = true
     } else {
@@ -164,11 +163,8 @@ public final class AppLoaderTask: NSObject {
       RunLoop.main.add(timer!, forMode: .default)
     }
 
-    NSLog("[ExpoUpdates] AppLoaderTask - loading embedded update...")
     loadEmbeddedUpdate {
-      NSLog("[ExpoUpdates] AppLoaderTask - embedded update loaded, launching...")
       self.launch { error, success in
-        NSLog("[ExpoUpdates] AppLoaderTask - launch callback: success=%d, error=%@", success ? 1 : 0, error?.localizedDescription ?? "nil")
         if !success {
           if !shouldCheckForUpdate {
             self.finish(withError: error)
@@ -179,8 +175,6 @@ public final class AppLoaderTask: NSObject {
             code: .updateFailedToLoad
           )
         } else {
-          NSLog("[ExpoUpdates] AppLoaderTask - launch succeeded, launchAssetUrl: %@",
-                self.candidateLauncher?.launchAssetUrl?.absoluteString ?? "nil")
           if let delegate = self.delegate,
             !delegate.appLoaderTask(self, didLoadCachedUpdate: self.candidateLauncher!.launchedUpdate!) {
             // ignore timer and other settings and force launch a remote update.
@@ -189,7 +183,6 @@ public final class AppLoaderTask: NSObject {
             shouldCheckForUpdate = true
           } else {
             self.isReadyToLaunch = true
-            NSLog("[ExpoUpdates] AppLoaderTask - calling maybeFinish, isTimerFinished: %d", self.isTimerFinished ? 1 : 0)
             self.maybeFinish()
           }
         }

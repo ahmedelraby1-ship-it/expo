@@ -64,16 +64,12 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
     completionQueue: DispatchQueue,
     completion: @escaping AppLauncherUpdateCompletionBlock
   ) {
-    NSLog("[ExpoUpdates] launchableUpdate: dispatching to databaseQueue...")
     database.databaseQueue.async {
-      NSLog("[ExpoUpdates] launchableUpdate: on databaseQueue, querying launchable updates...")
       var launchableUpdates: [Update]?
       var launchableUpdatesError: UpdatesError?
       do {
         launchableUpdates = try database.launchableUpdates(withConfig: config)
-        NSLog("[ExpoUpdates] launchableUpdate: found %d launchable updates", launchableUpdates?.count ?? 0)
       } catch {
-        NSLog("[ExpoUpdates] launchableUpdate: error querying: %@", error.localizedDescription)
         launchableUpdatesError = UpdatesError.appLauncherWithDatabaseUnknownError(cause: error)
       }
 
@@ -85,11 +81,8 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
         manifestFiltersError = UpdatesError.appLauncherWithDatabaseUnknownError(cause: error)
       }
 
-      NSLog("[ExpoUpdates] launchableUpdate: dispatching back to completionQueue...")
       completionQueue.async {
-        NSLog("[ExpoUpdates] launchableUpdate: on completionQueue, filtering updates...")
         guard let launchableUpdates = launchableUpdates else {
-          NSLog("[ExpoUpdates] launchableUpdate: no launchable updates, returning error")
           completion(launchableUpdatesError!, nil)
           return
         }
@@ -100,33 +93,24 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
         }
 
         let embeddedManifest = EmbeddedAppLoader.originalEmbeddedManifest(withConfig: config, database: database)
-        NSLog("[ExpoUpdates] launchableUpdate: embeddedManifest id=%@, hasEmbeddedUpdate=%d",
-              embeddedManifest?.updateId.uuidString ?? "nil", config.hasEmbeddedUpdate ? 1 : 0)
         var filteredLaunchableUpdates: [Update] = []
         for update in launchableUpdates {
-          NSLog("[ExpoUpdates] launchableUpdate: checking update id=%@, status=%d",
-                update.updateId.uuidString, update.status.rawValue)
           // We can only run an update marked as embedded if it's actually the update embedded in the
           // current binary. We might have an older update from a previous binary still listed in the
           // database with Embedded status so we need to filter that out here.
           if update.status == UpdateStatus.StatusEmbedded && update.updateId != embeddedManifest?.updateId {
-            NSLog("[ExpoUpdates] launchableUpdate: filtering out stale embedded update")
             continue
           }
 
           // If embedded update is disabled, we should exclude embedded update from launchable updates
           if !config.hasEmbeddedUpdate && embeddedManifest?.updateId == update.updateId {
-            NSLog("[ExpoUpdates] launchableUpdate: filtering out disabled embedded update")
             continue
           }
 
           filteredLaunchableUpdates.append(update)
         }
 
-        let selected = selectionPolicy.launchableUpdate(fromUpdates: filteredLaunchableUpdates, filters: manifestFilters)
-        NSLog("[ExpoUpdates] launchableUpdate: selected update=%@, filtered count=%d",
-              selected?.updateId.uuidString ?? "nil", filteredLaunchableUpdates.count)
-        completion(nil, selected)
+        completion(nil, selectionPolicy.launchableUpdate(fromUpdates: filteredLaunchableUpdates, filters: manifestFilters))
       }
     }
   }
@@ -151,11 +135,8 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
     precondition(self.completion == nil, "AppLauncher:launchUpdateWithSelectionPolicy:completion should not be called twice on the same instance")
     self.completion = completion
 
-    NSLog("[ExpoUpdates] launchUpdate: launchedUpdate=%@", launchedUpdate?.updateId.uuidString ?? "nil")
     if launchedUpdate == nil {
       launchableUpdate(selectionPolicy: selectionPolicy) { error, launchableUpdate in
-        NSLog("[ExpoUpdates] launchUpdate callback: error=%@, update=%@",
-              error?.localizedDescription ?? "nil", launchableUpdate?.updateId.uuidString ?? "nil")
         if error != nil || launchableUpdate == nil {
           if let completionInner = self.completion {
             self.completionQueue.async {
@@ -206,8 +187,6 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
         forResource: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFilename,
         withExtension: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFileType
       )
-      NSLog("[ExpoUpdates] AppLauncherWithDatabase embedded - mainBundle url: %@, frameworkBundle url: %@",
-            mainBundleUrl?.absoluteString ?? "nil", frameworkBundleUrl?.absoluteString ?? "nil")
       launchAssetUrl = mainBundleUrl ?? frameworkBundleUrl
 
       completionQueue.async {
@@ -230,8 +209,6 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
 
     let assets = launchedUpdate.assets()!
     let totalAssetCount = assets.count
-    NSLog("[ExpoUpdates] ensureAllAssetsExist: status=%d, totalAssets=%d, directory=%@",
-          launchedUpdate.status.rawValue, totalAssetCount, directory.path)
 
     if totalAssetCount == 0 {
       completionQueue.async {
@@ -243,13 +220,9 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
 
     for asset in assets {
       let assetLocalUrl = directory.appendingPathComponent(asset.filename)
-      NSLog("[ExpoUpdates] ensureAssetExists: key=%@, filename=%@, isLaunchAsset=%d",
-            asset.key ?? "nil", asset.filename, asset.isLaunchAsset ? 1 : 0)
       ensureAssetExists(asset: asset, withLocalUrl: assetLocalUrl) { exists in
         dispatchPrecondition(condition: .onQueue(self.launcherQueue))
         self.completedAssets += 1
-        NSLog("[ExpoUpdates] asset checked: key=%@, exists=%d, completed=%d/%d",
-              asset.key ?? "nil", exists ? 1 : 0, self.completedAssets, totalAssetCount)
 
         if exists {
           if asset.isLaunchAsset {
@@ -262,8 +235,6 @@ public class AppLauncherWithDatabase: NSObject, AppLauncher {
         }
 
         if self.completedAssets == totalAssetCount {
-          NSLog("[ExpoUpdates] all assets checked, launchAssetUrl=%@",
-                self.launchAssetUrl?.absoluteString ?? "nil")
           self.completionQueue.async {
             self.completion!(self.launchAssetError, self.launchAssetUrl != nil)
             self.completion = nil

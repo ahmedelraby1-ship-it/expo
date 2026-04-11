@@ -21,17 +21,13 @@ public final class AppLauncherNoDatabase: NSObject, AppLauncher {
 
   public func launchUpdate() {
     precondition(assetFilesMap == nil, "assetFilesMap should be null for embedded updates")
-    let mainBundleUrl = Bundle.main.url(
+    launchAssetUrl = Bundle.main.url(
+      forResource: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFilename,
+      withExtension: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFileType
+    ) ?? Bundle(for: AppLauncherNoDatabase.self).url(
       forResource: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFilename,
       withExtension: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFileType
     )
-    let frameworkBundleUrl = Bundle(for: AppLauncherNoDatabase.self).url(
-      forResource: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFilename,
-      withExtension: EmbeddedAppLoader.EXUpdatesBareEmbeddedBundleFileType
-    )
-    NSLog("[ExpoUpdates] AppLauncherNoDatabase.launchUpdate - mainBundle url: %@, frameworkBundle url: %@",
-          mainBundleUrl?.absoluteString ?? "nil", frameworkBundleUrl?.absoluteString ?? "nil")
-    launchAssetUrl = mainBundleUrl ?? frameworkBundleUrl
   }
 
   public func isUsingEmbeddedAssets() -> Bool {

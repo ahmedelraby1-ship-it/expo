@@ -229,14 +229,9 @@ public class AppController: NSObject {
 
     let logger = UpdatesLogger()
 
-    NSLog("[ExpoUpdates] initializeWithoutStarting: validating config...")
-    NSLog("[ExpoUpdates] Bundle.main: %@", Bundle.main.bundlePath)
-    NSLog("[ExpoUpdates] Bundle(for: UpdatesConfig.self): %@", Bundle(for: UpdatesConfig.self).bundlePath)
-
     // swiftlint:disable closure_body_length
     let config = _overrideConfig != nil ? _overrideConfig : {
       let updatesConfigurationValidationResult = UpdatesConfig.getUpdatesConfigurationValidationResult(mergingOtherDictionary: nil)
-      NSLog("[ExpoUpdates] validation result: %@", String(describing: updatesConfigurationValidationResult))
       switch updatesConfigurationValidationResult {
       case .Valid:
         guard let config = try? UpdatesConfig.configWithExpoPlist(mergingOtherDictionary: nil) else {
