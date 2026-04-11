@@ -22,13 +22,17 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
     initialProperties: [AnyHashable: Any]?,
     launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> UIView? {
+    NSLog("[ExpoUpdates] createReactRootView called, moduleName=%@", moduleName)
     if UpdatesUtils.isUsingCustomInitialization() {
+      NSLog("[ExpoUpdates] using custom initialization, returning nil")
       return nil
     }
 
     AppController.initializeWithoutStarting()
     let controller = AppController.sharedInstance
+    NSLog("[ExpoUpdates] controller type: %@, isActiveController: %d", String(describing: type(of: controller)), controller.isActiveController ? 1 : 0)
     if !controller.isActiveController {
+      NSLog("[ExpoUpdates] controller is not active, returning nil")
       return nil
     }
 
@@ -36,6 +40,7 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
     self.launchOptions = launchOptions
     controller.delegate = self
     controller.start()
+    NSLog("[ExpoUpdates] controller.start() called")
 
     self.rootViewModuleName = moduleName
     self.rootViewInitialProperties = initialProperties
@@ -63,12 +68,17 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
   }
 
   public override func bundleURL(reactDelegate: ExpoReactDelegate) -> URL? {
-    AppController.sharedInstance.launchAssetUrl()
+    let url = AppController.sharedInstance.launchAssetUrl()
+    NSLog("[ExpoUpdates] bundleURL called, returning: %@", url?.absoluteString ?? "nil")
+    return url
   }
 
   // MARK: AppControllerDelegate implementations
 
   public func appController(_ appController: AppControllerInterface, didStartWithSuccess success: Bool) {
+    NSLog("[ExpoUpdates] appController didStartWithSuccess: %d", success ? 1 : 0)
+    let assetUrl = AppController.sharedInstance.launchAssetUrl()
+    NSLog("[ExpoUpdates] launchAssetUrl at didStart: %@", assetUrl?.absoluteString ?? "nil")
     if UpdatesUtils.isUsingCustomInitialization() {
       return
     }
@@ -77,20 +87,33 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
     }
 
     let rootView = reactDelegate.reactNativeFactory.recreateRootView(
-      withBundleURL: AppController.sharedInstance.launchAssetUrl(),
+      withBundleURL: assetUrl,
       moduleName: self.rootViewModuleName,
       initialProps: self.rootViewInitialProperties,
       launchOptions: self.launchOptions
     )
 
-    let window = getWindow()
-    let rootViewController = reactDelegate.createRootViewController()
 #if os(iOS) || os(tvOS)
     rootView.backgroundColor = self.deferredRootView?.backgroundColor ?? UIColor.white
-    rootViewController.view = rootView
-    window.rootViewController = rootViewController
-    window.makeKeyAndVisible()
+
+    // In brownfield setups, the deferred root view is embedded within the host app's
+    // view hierarchy (e.g. inside a NavigationController). Replacing the window's root
+    // view controller would break the host app's navigation. Instead, find the view
+    // controller that owns the deferred view and replace its view in-place.
+    if let deferredRootView = self.deferredRootView,
+      let owningViewController = findViewController(for: deferredRootView),
+      owningViewController != getWindow().rootViewController {
+      owningViewController.view = rootView
+    } else {
+      let window = getWindow()
+      let rootViewController = reactDelegate.createRootViewController()
+      rootViewController.view = rootView
+      window.rootViewController = rootViewController
+      window.makeKeyAndVisible()
+    }
 #else
+    let window = getWindow()
+    let rootViewController = reactDelegate.createRootViewController()
     rootViewController.view = rootView
     rootView.frame = window.frame
     window.contentViewController = rootViewController
@@ -134,6 +157,22 @@ public final class ExpoUpdatesReactDelegateHandler: ExpoReactDelegateHandler, Ap
     return view
   }
 #endif
+
+  /**
+   Finds the nearest view controller that owns the given view by walking
+   up the responder chain. Returns the first UIViewController whose view
+   matches the target view.
+   */
+  private func findViewController(for view: UIView) -> UIViewController? {
+    var responder: UIResponder? = view.next
+    while let current = responder {
+      if let viewController = current as? UIViewController, viewController.view == view {
+        return viewController
+      }
+      responder = current.next
+    }
+    return nil
+  }
 
   private func getWindow() -> UIWindow {
     #if os(macOS)

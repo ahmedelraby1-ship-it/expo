@@ -111,15 +111,19 @@ public final class UpdatesUtils: NSObject {
   internal static func url(forBundledAsset asset: UpdateAsset) -> URL? {
     guard let mainBundleDir = asset.mainBundleDir else {
       return Bundle.main.url(forResource: asset.mainBundleFilename, withExtension: asset.type)
+        ?? Bundle(for: UpdatesUtils.self).url(forResource: asset.mainBundleFilename, withExtension: asset.type)
     }
     return Bundle.main.url(forResource: asset.mainBundleFilename, withExtension: asset.type, subdirectory: mainBundleDir)
+      ?? Bundle(for: UpdatesUtils.self).url(forResource: asset.mainBundleFilename, withExtension: asset.type, subdirectory: mainBundleDir)
   }
 
   internal static func path(forBundledAsset asset: UpdateAsset) -> String? {
     guard let mainBundleDir = asset.mainBundleDir else {
       return Bundle.main.path(forResource: asset.mainBundleFilename, ofType: asset.type)
+        ?? Bundle(for: UpdatesUtils.self).path(forResource: asset.mainBundleFilename, ofType: asset.type)
     }
     return Bundle.main.path(forResource: asset.mainBundleFilename, ofType: asset.type, inDirectory: mainBundleDir)
+      ?? Bundle(for: UpdatesUtils.self).path(forResource: asset.mainBundleFilename, ofType: asset.type, inDirectory: mainBundleDir)
   }
 
   /**

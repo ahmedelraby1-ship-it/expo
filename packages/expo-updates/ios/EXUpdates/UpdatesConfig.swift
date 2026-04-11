@@ -149,10 +149,13 @@ public final class UpdatesConfig: NSObject {
     // In brownfield setups, the Expo project is packaged as an xcframework where Expo.plist
     // is embedded in the framework bundle rather than the host app bundle.
     var configPlistPath = Bundle.main.path(forResource: PlistName, ofType: "plist")
+    NSLog("[ExpoUpdates] Expo.plist in Bundle.main: %@", configPlistPath ?? "not found")
     if configPlistPath == nil {
       configPlistPath = Bundle(for: UpdatesConfig.self).path(forResource: PlistName, ofType: "plist")
+      NSLog("[ExpoUpdates] Expo.plist in framework bundle: %@", configPlistPath ?? "not found")
     }
     guard let configPlistPath else {
+      NSLog("[ExpoUpdates] Expo.plist not found in any bundle!")
       throw UpdatesConfigError.ExpoUpdatesConfigPlistError
     }
 
